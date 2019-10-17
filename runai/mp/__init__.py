@@ -25,15 +25,16 @@ def init(splits, method):
 
     from .keras import layers
 
-    keras.layers.Activation     = layers.Activation
-    keras.layers.Add            = layers.Add
-    keras.layers.Average        = layers.Average
-    keras.layers.Conv2D         = layers.Conv2D
-    keras.layers.Dense          = layers.Dense
-    keras.layers.Dropout        = layers.Dropout
-    keras.layers.Maximum        = layers.Maximum
-    keras.layers.MaxPooling2D   = layers.MaxPooling2D
-    keras.layers.Minimum        = layers.Minimum
-    keras.layers.Multiply       = layers.Multiply
-    keras.layers.Subtract       = layers.Subtract
-    keras.layers.ZeroPadding2D  = layers.ZeroPadding2D
+    keras.layers.Activation         = layers.Activation
+    keras.layers.Add                = layers.Add
+    keras.layers.Average            = layers.Average
+    keras.layers.BatchNormalization = layers.BatchNormalization
+    keras.layers.Conv2D             = layers.Conv2D
+    keras.layers.Dense              = layers.Dense
+    keras.layers.Dropout            = layers.Dropout
+    keras.layers.Maximum            = layers.Maximum
+    keras.layers.MaxPooling2D       = layers.MaxPooling2D
+    keras.layers.Minimum            = layers.Minimum
+    keras.layers.Multiply           = layers.Multiply
+    keras.layers.Subtract           = layers.Subtract
+    keras.layers.ZeroPadding2D      = layers.ZeroPadding2D
