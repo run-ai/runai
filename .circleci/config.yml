@@ -12,7 +12,7 @@ jobs:
       - run:
             name: Install dependencies
             command: |
-                sudo pip install tensorflow==1.14 keras==2.2.4 
+                sudo pip install tensorflow==1.14 keras==2.2.4 prometheus_client
 
       - run:
             name: Test
