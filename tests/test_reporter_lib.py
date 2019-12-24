@@ -41,8 +41,6 @@ class KerasAutologTest(unittest.TestCase):
             else:
                 self._run_model_with_fit_generator()
 
-                print()
-
             self.assertEqual(reportMetricMock.reported, expected_metrics, 'Reported Metrics unmatched')
             self.assertEqual(reportParameterMock.reported, expected_parameters, 'Reported Paramters unmatched')
 

@@ -70,7 +70,6 @@ def autolog(acc = True, loss = True, learning_rate = True, epoch = True, step = 
             batch_size_val = tmp_list[3]
         elif ('batch_size' in kwargs):
             batch_size_val = kwargs['batch_size']
-            print("yodar batch size:", batch_size_val)
         if batch_size_val:
             reportMetricIfNeeded(inputs, 'batch_size', batch_size_val)
 
@@ -138,6 +137,5 @@ def reportMetricIfNeeded(inputs, key, value):
         reportMetric(key, value)
 
 def reportParameterIfNeeded(inputs, key, value):
-    print("inputs: ", inputs)
     if key in inputs and inputs[key]:
         reportParameter(key, value)
