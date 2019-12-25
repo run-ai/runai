@@ -42,6 +42,7 @@ def autolog(acc=True, loss=True, learning_rate=True, epoch=True, step=True, batc
     keras.Model.fit_generator = fit_generator
     keras.Model.compile = compile
 
+
     def _report_overall_epochs(original_args, original_kwargs, index_in_args=None):
         if index_in_args is None:
             raise ValueError("'index_in_args' must be specified")
@@ -85,18 +86,6 @@ def autolog(acc=True, loss=True, learning_rate=True, epoch=True, step=True, batc
         elif index_in_args < len(original_args):
             return original_args[index_in_args]
         return default_value
-
-    def _add_autolog_metrics2222(args, kwargs):
-        if len(args) > 2:
-            metrics = args[2]
-        else:
-            if 'metrics' not in kwargs:
-                kwargs['metrics'] = []
-
-            metrics = kwargs['metrics']
-
-        if 'acc' not in metrics:
-            metrics.append('acc')
 
     def _add_autolog_metrics(original_args, original_kwargs):
         metrics_index_in_args = 2
