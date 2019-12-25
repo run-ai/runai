@@ -19,7 +19,6 @@ def reportMetric(reporter_metric_name, reporter_metric_value):
 def reportParameter(reporter_param_name, reporter_param_value):
     createGaugeAndPushToGateway(reporter_param_name, reporter_param_value, ReportType.parameter)
 
-
 def createGaugeAndPushToGateway(reporter_name, reporter_value, report_type):
     registry = CollectorRegistry()
 

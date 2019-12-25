@@ -62,7 +62,6 @@ def autolog(acc=True, loss=True, learning_rate=True, epoch=True, step=True, batc
         if loss_method_val:
             _report_parameter_if_needed(autolog_inputs, 'loss_method', loss_method_val)
 
-
     def _append_autolog_metrics_to_callbacks(original_args, original_kwargs, index_in_args=None):
         if index_in_args is None:
             raise ValueError("'index_in_args' must be specified")
@@ -97,18 +96,10 @@ def autolog(acc=True, loss=True, learning_rate=True, epoch=True, step=True, batc
 
             metrics = original_kwargs['metrics']
 
-        autolog_metrics = ['acc']
-        for metric in autolog_metrics:
-            metrics.append(metric)
-
-    def _add_metric_if_not_exist(metric_list, metrics_to_add):
-        for metric in metrics_to_add:
-            if metric not in metric_list:
-                metric_list.append(metric)
-
-    def _report_metric_from_logs_if_needed(autolog_inputs, key, logs):
-        if key in logs and _should_report_metric_or_parameter(autolog_inputs, key):
-            reportMetric(key, logs[key])
+        autolog_metrics_from_logs = ['acc']
+        for metric in autolog_metrics_from_logs:
+            if metric not in metrics:
+                metrics.append(metric)
 
     def _report_metric_if_needed(autolog_inputs, key, value):
         if _should_report_metric_or_parameter(autolog_inputs, key):
@@ -131,8 +122,8 @@ def autolog(acc=True, loss=True, learning_rate=True, epoch=True, step=True, batc
 
         def on_batch_end(self, batch, logs={}):
             _report_metric_if_needed(autolog_inputs, 'step', batch)
-            _report_metric_from_logs_if_needed(autolog_inputs, "acc", logs)
-            _report_metric_from_logs_if_needed(autolog_inputs, "loss", logs)
+            self._report_metric_from_logs_if_needed(autolog_inputs, "acc", logs)
+            self._report_metric_from_logs_if_needed(autolog_inputs, "loss", logs)
 
         def on_epoch_begin(self, epoch_val, logs=None):
             _report_metric_if_needed(autolog_inputs, 'epoch', epoch_val)
@@ -151,3 +142,7 @@ def autolog(acc=True, loss=True, learning_rate=True, epoch=True, step=True, batc
             parameter_from_model = getattr(self.model.optimizer, name_of_optimizer_attr)
             value = parameter_from_model if type(parameter_from_model) is float else keras.backend.eval(parameter_from_model)
             reportParameter(metric_name, value)
+
+        def _report_metric_from_logs_if_needed(self, autolog_inputs, key, logs):
+            if key in logs:
+                _report_metric_if_needed(autolog_inputs, key, logs[key])
