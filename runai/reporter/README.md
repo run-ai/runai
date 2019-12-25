@@ -52,7 +52,7 @@ runai.reporter.reportMetric('batch_size', 100)
 Sends a parameter with the following name "reporter_push_gateway_metric_[reporter_parameter_name]".
 ##### usage example:
 ```
-runai.reporter.reportParameter('loss_method', categorical_crossentropy)
+runai.reporter.reportParameter('loss_method', 'categorical_crossentropy')
 ```
 
 #### autolog

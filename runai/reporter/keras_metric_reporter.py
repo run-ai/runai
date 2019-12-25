@@ -1,6 +1,8 @@
 import time
-from runai.reporter import reportMetric, reportParameter
+
 import keras
+
+from runai.reporter import reportMetric, reportParameter
 
 __original_fit__ = keras.Model.fit
 __original_compile__ = keras.Model.compile
@@ -17,51 +19,22 @@ def autolog(acc=True, loss=True, learning_rate=True, epoch=True, step=True, batc
     autolog_inputs = locals()
 
     def fit(self, *args, **kwargs):
-        callbacks_index_in_args = 5
-        callbacks_value_to_add = [KerasAutoMetricReporter()]
-        _add_value_to_method_parameter(args, kwargs, callbacks_index_in_args, 'callbacks', callbacks_value_to_add)
-        _add_value_to_method_parameter(args, kwargs, callbacks_index_in_args, 'callbacks', callbacks_value_to_add)
-
-        if _should_report_metric_or_parameter(autolog_inputs, 'overall_epochs'):
-            keras_fit_default_number_of_epochs = 1
-            epochs_index_args = 3
-            overall_epochs_val = _get_value_of_method_parameter(args, kwargs, epochs_index_args, 'epochs')
-            if overall_epochs_val:
-                reportMetric('overall_epochs', overall_epochs_val)
-            else:
-                reportMetric('overall_epochs', keras_fit_default_number_of_epochs)
-
-        if _should_report_metric_or_parameter(autolog_inputs, 'batch_size'):
-            batch_size_index_args = 2
-            batch_size_val = _get_value_of_method_parameter(args, kwargs, batch_size_index_args, 'batch_size')
-            if batch_size_val:
-                reportMetric('batch_size', batch_size_val)
+        _append_autolog_metrics_to_callbacks(args, kwargs, index_in_args=5)
+        _report_overall_epochs(args, kwargs, index_in_args=3)
+        _report_batch_size(args, kwargs)
 
         return __original_fit__(self, *args, **kwargs)
 
     def fit_generator(self, *args, **kwargs):
-        callbacks_index_in_args = 4
-        callbacks_value_to_add = [KerasAutoMetricReporter()]
-        _add_value_to_method_parameter(args, kwargs, callbacks_index_in_args, 'callbacks', callbacks_value_to_add)
-        _add_value_to_method_parameter(args, kwargs, callbacks_index_in_args, 'callbacks', callbacks_value_to_add)
-
-        if _should_report_metric_or_parameter(autolog_inputs, 'overall_epochs'):
-            keras_fit_generator_default_number_of_epochs = 1
-            epochs_index_args = 2
-            overall_epochs_val = _get_value_of_method_parameter(args, kwargs, epochs_index_args, 'epochs')
-            if overall_epochs_val:
-                reportMetric('overall_epochs', overall_epochs_val)
-            else:
-                reportMetric('overall_epochs', keras_fit_generator_default_number_of_epochs)
+        _append_autolog_metrics_to_callbacks(args, kwargs, index_in_args=4)
+        _report_overall_epochs(args, kwargs, index_in_args=2)
 
         return __original_fit_generator__(self, *args, **kwargs)
 
     def compile(self, *args, **kwargs):
-        _add_auto_log_metrics(args, kwargs)
-        loss_method_index_args = 1
-        loss_method_val = _get_value_of_method_parameter(args, kwargs, loss_method_index_args, 'loss')
-        if loss_method_val:
-            _report_parameter_if_needed(autolog_inputs, 'loss_method', loss_method_val)
+        _add_autolog_metrics(args, kwargs)
+        _report_loss_method(args, kwargs)
+        _report_loss_method(args, kwargs)
 
         return __original_compile__(self, *args, **kwargs)
 
@@ -69,39 +42,83 @@ def autolog(acc=True, loss=True, learning_rate=True, epoch=True, step=True, batc
     keras.Model.fit_generator = fit_generator
     keras.Model.compile = compile
 
-    def _add_value_to_method_parameter(original_args, original_kwargs, parameter_args_index, parameter_kwargs_key, value):
-        if parameter_kwargs_key in original_kwargs:
-            original_kwargs[parameter_kwargs_key] += value
-        elif parameter_args_index < len(original_args):
-            original_args[parameter_args_index] += value
-        else:
-            original_kwargs[parameter_kwargs_key] = value
+    def _report_overall_epochs(original_args, original_kwargs, index_in_args=None):
+        if index_in_args is None:
+            raise ValueError("'index_in_args' must be specified")
 
-    def _get_value_of_method_parameter(original_args, original_kwargs, parameter_args_index, parameter_kwargs_key):
-        if parameter_kwargs_key in original_kwargs:
-            return original_kwargs[parameter_kwargs_key]
-        elif parameter_args_index < len(original_args):
-            return original_args[parameter_args_index]
-        return None
+        if _should_report_metric_or_parameter(autolog_inputs, 'overall_epochs'):
+            overall_epochs_val = _get_value_of_method_parameter(original_args, original_kwargs, index_in_args, key_in_kwargs='epochs', default_value=1)  # Keras' default value
+            reportMetric('overall_epochs', overall_epochs_val)
 
-    def _add_auto_log_metrics(original_args, original_kwargs):
-        metrics_args_index = 2
-        metrics_to_add = ['acc']
-        if 'metrics' in original_kwargs:
-            _add_metric_if_not_exist(original_kwargs['metrics'], metrics_to_add)
-        elif len(original_args) > metrics_args_index:
-            _add_metric_if_not_exist(original_args[metrics_args_index], metrics_to_add)
+    def _report_batch_size(original_args, original_kwargs):
+        if _should_report_metric_or_parameter(autolog_inputs, 'batch_size'):
+            batch_size_val = _get_value_of_method_parameter(original_args, original_kwargs, index_in_args=2, key_in_kwargs='batch_size')
+            if batch_size_val:
+                reportMetric('batch_size', batch_size_val)
+
+    def _report_loss_method(original_args, original_kwargs):
+        loss_method_val = _get_value_of_method_parameter(original_args, original_kwargs, index_in_args=1, key_in_kwargs='loss')
+        if loss_method_val:
+            _report_parameter_if_needed(autolog_inputs, 'loss_method', loss_method_val)
+
+
+    def _append_autolog_metrics_to_callbacks(original_args, original_kwargs, index_in_args=None):
+        if index_in_args is None:
+            raise ValueError("'index_in_args' must be specified")
+
+        if 'callbacks' in original_kwargs:
+            original_kwargs['callbacks'].append(KerasAutoMetricReporter())
+        elif index_in_args < len(original_args):
+            original_args[index_in_args].append(KerasAutoMetricReporter())
         else:
-            original_kwargs['metrics'] = metrics_to_add
+            original_kwargs['callbacks'] = [KerasAutoMetricReporter()]
+
+    def _get_value_of_method_parameter(original_args, original_kwargs, index_in_args=None, key_in_kwargs=None, default_value=None):
+        if index_in_args is None:
+            raise ValueError("'index_in_args' must be specified")
+
+        if key_in_kwargs is None:
+            raise ValueError("'key_in_kwargs' must be specified")
+
+        if key_in_kwargs in original_kwargs:
+            return original_kwargs[key_in_kwargs]
+        elif index_in_args < len(original_args):
+            return original_args[index_in_args]
+        return default_value
+
+    def _add_autolog_metrics2222(args, kwargs):
+        if len(args) > 2:
+            metrics = args[2]
+        else:
+            if 'metrics' not in kwargs:
+                kwargs['metrics'] = []
+
+            metrics = kwargs['metrics']
+
+        if 'acc' not in metrics:
+            metrics.append('acc')
+
+    def _add_autolog_metrics(original_args, original_kwargs):
+        metrics_index_in_args = 2
+        if len(original_args) > metrics_index_in_args:
+            metrics = original_args[metrics_index_in_args]
+        else:
+            if 'metrics' not in original_kwargs:
+                original_kwargs['metrics'] = []
+
+            metrics = original_kwargs['metrics']
+
+        autolog_metrics = ['acc']
+        for metric in autolog_metrics:
+            metrics.append(metric)
 
     def _add_metric_if_not_exist(metric_list, metrics_to_add):
         for metric in metrics_to_add:
-            if not metric in metric_list:
+            if metric not in metric_list:
                 metric_list.append(metric)
 
     def _report_metric_from_logs_if_needed(autolog_inputs, key, logs):
-        does_key_exist_in_log = key in logs
-        if does_key_exist_in_log and _should_report_metric_or_parameter(autolog_inputs, key):
+        if key in logs and _should_report_metric_or_parameter(autolog_inputs, key):
             reportMetric(key, logs[key])
 
     def _report_metric_if_needed(autolog_inputs, key, value):
@@ -117,12 +134,11 @@ def autolog(acc=True, loss=True, learning_rate=True, epoch=True, step=True, batc
 
     class KerasAutoMetricReporter(keras.callbacks.Callback):
         def on_train_begin(self, logs=None):
-            _report_parameter_if_needed(autolog_inputs, 'optimizer_name', type(
-                self.model.optimizer).__name__)
-            _report_metric_if_needed(
-                autolog_inputs, 'num_layers', len(self.model.layers))
-            self._handle_learning_rate_report()
-            self._handle_epsilon_report()
+            _report_parameter_if_needed(autolog_inputs, 'optimizer_name', type(self.model.optimizer).__name__)
+            _report_metric_if_needed(autolog_inputs, 'num_layers', len(self.model.layers))
+
+            self._report_parameter_from_model_optimizer('learning_rate', 'lr')
+            self._report_parameter_from_model_optimizer('epsilon')
 
         def on_batch_end(self, batch, logs={}):
             _report_metric_if_needed(autolog_inputs, 'step', batch)
@@ -134,22 +150,15 @@ def autolog(acc=True, loss=True, learning_rate=True, epoch=True, step=True, batc
 
         def on_epoch_end(self, epoch_val, logs=None):
             _report_metric_if_needed(autolog_inputs, 'epoch', epoch_val)
-            self._handle_learning_rate_report()
+            self._report_parameter_from_model_optimizer('learning_rate', 'lr')
 
-        def _handle_learning_rate_report(self):
-            if not _should_report_metric_or_parameter(autolog_inputs, 'learning_rate') or not hasattr(self.model.optimizer, 'lr'):
+        def _report_parameter_from_model_optimizer(self, metric_name, name_of_optimizer_attr=None):
+            if not name_of_optimizer_attr:
+                name_of_optimizer_attr = metric_name
+
+            if not _should_report_metric_or_parameter(autolog_inputs, metric_name) or not hasattr(self.model.optimizer, name_of_optimizer_attr):
                 return
 
-            lr = self.model.optimizer.lr if \
-                type(self.model.optimizer.lr) is float \
-                else keras.backend.eval(self.model.optimizer.lr)
-            reportParameter('learning_rate', lr)
-
-        def _handle_epsilon_report(self):
-            if not _should_report_metric_or_parameter(autolog_inputs, 'epsilon') or not hasattr(self.model.optimizer, 'epsilon'):
-                return
-
-            epsilon_val = self.model.optimizer.epsilon if \
-                type(self.model.optimizer.epsilon) is float \
-                else keras.backend.eval(self.model.optimizer.epsilon)
-            reportParameter('epsilon', epsilon_val)
+            parameter_from_model = getattr(self.model.optimizer, name_of_optimizer_attr)
+            value = parameter_from_model if type(parameter_from_model) is float else keras.backend.eval(parameter_from_model)
+            reportParameter(metric_name, value)
