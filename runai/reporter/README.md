@@ -1,10 +1,10 @@
 # Run:AI Reporter Library
 
-An API to send metrics and parameters to Promethues Push Gateway.
+An interface to send metrics and parameters to Promethues Push Gateway.
 
 ## Concepts
 ### Parameters
-Key-value input parameters of your choice. key and value are strings.
+Key-value input parameters of your choice. Key and value are strings.
 
 ### Metrics
 Key-value input parameters of your choice. Key is a string, value is numeric.
@@ -35,7 +35,7 @@ These environment variables will be added to each pod when a job was created by 
 First you need to add the following import command to your code:
 
 ```
-import runai.reporterlib
+import runai.reporter
 ```
 
 ### Methods
@@ -44,7 +44,7 @@ import runai.reporterlib
 Sends a metric with the following name "reporter_push_gateway_metric_[reporter_metric_name]".
 ##### usage example:
 ```
-runai.reporterlib.reportMetric('batch_size', 100)
+runai.reporter.reportMetric('batch_size', 100)
 ```
 
 #### reportParameter
@@ -52,16 +52,16 @@ runai.reporterlib.reportMetric('batch_size', 100)
 Sends a parameter with the following name "reporter_push_gateway_metric_[reporter_parameter_name]".
 ##### usage example:
 ```
-runai.reporterlib.reportParameter('loss_method', categorical_crossentropy)
+runai.reporter.reportParameter('loss_method', categorical_crossentropy)
 ```
 
 #### autolog
 
-Enables automatic metrics and parameters updates from Keras fit, fit_generator methods.
+Enables automatic metrics and parameters updates for Keras.
 ##### usage:
 Simply add the following line before running the model
 ```
-runai.reporterlib.autolog()
+runai.reporter.autolog()
 ```
 
 
@@ -71,5 +71,5 @@ Disables automatic metrics and parameters updates from Keras fit, fit_generator 
 ##### usage:
 Simply add the following line before running the model
 ```
-runai.reporterlib.disableAutolog()
+runai.reporter.disableAutolog()
 ```

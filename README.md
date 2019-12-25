@@ -19,7 +19,7 @@ This library consists of a few pretty much independent submodules:
 | Gradient Accumulation | `ga` | [Gradient accumulation for Keras optimizers](runai/ga/README.md) |
 | Model Parallelism | `mp` | Model-parallelism support for Keras builtin layers |
 | Auto Profiler | `profiler` | Export timeline of TF/Keras models easily |
-| Reporter Library | `reporterlib` | [An API to send metrics and parameters to Promethues Push Gateway](runai/reporterlib/README.md) |
+| Reporter | `reporter` | [An interface to send metrics and parameters to Promethues Push Gateway](runai/reporter/README.md) |
 
 ## Getting Started
 
