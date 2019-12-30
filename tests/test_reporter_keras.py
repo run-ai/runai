@@ -86,14 +86,14 @@ class KerasAutologTest(unittest.TestCase):
 
     def testFitWithAutoLog(self):
         runai.reporter.autolog()
-        expected_metrics = ['overall_epochs', 'batch_size', 'num_layers', 'epoch', 'step', 'acc', 'loss']
+        expected_metrics = ['overall_epochs', 'batch_size', 'number_of_layers', 'epoch', 'step', 'accuracy', 'loss']
         expected_parameters = ['optimizer_name', 'learning_rate']
         self._run_test(expected_metrics=expected_metrics, expected_parameters=expected_parameters)
         runai.reporter.disableAutoLog()
 
     def testFitAllMetrics(self):
         runai.reporter.autolog(loss_method=True, epsilon=True)
-        expected_metrics = ['overall_epochs', 'batch_size', 'num_layers', 'epoch', 'step', 'acc', 'loss']
+        expected_metrics = ['overall_epochs', 'batch_size', 'number_of_layers', 'epoch', 'step', 'accuracy', 'loss']
         expected_parameters = ['loss_method', 'optimizer_name', 'learning_rate', 'epsilon']
         self._run_test(expected_metrics=expected_metrics, expected_parameters=expected_parameters)
         runai.reporter.disableAutoLog()
@@ -103,14 +103,14 @@ class KerasAutologTest(unittest.TestCase):
 
     def testFitGeneratorWithAutoLog(self):
         runai.reporter.autolog()
-        expected_metrics = ['overall_epochs', 'num_layers', 'epoch', 'step', 'acc', 'loss']
+        expected_metrics = ['overall_epochs', 'number_of_layers', 'epoch', 'step', 'accuracy', 'loss']
         expected_parameters = ['optimizer_name', 'learning_rate']
         self._run_test(run_fit=False, expected_metrics=expected_metrics, expected_parameters=expected_parameters)
         runai.reporter.disableAutoLog()
 
     def testFitGeneratorAllMetrics(self):
         runai.reporter.autolog(loss_method=True, epsilon=True)
-        expected_metrics = ['overall_epochs', 'num_layers', 'epoch', 'step', 'acc', 'loss']
+        expected_metrics = ['overall_epochs', 'number_of_layers', 'epoch', 'step', 'accuracy', 'loss']
         expected_parameters = ['loss_method', 'optimizer_name', 'learning_rate', 'epsilon']
         self._run_test(run_fit=False, expected_metrics=expected_metrics, expected_parameters=expected_parameters)
         runai.reporter.disableAutoLog()

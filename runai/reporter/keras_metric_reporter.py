@@ -13,8 +13,8 @@ def disableAutoLog():
     keras.Model.fit_generator = __original_fit_generator__
     keras.Model.compile = __original_compile__
 
-def autolog(acc=True, loss=True, learning_rate=True, epoch=True, step=True, batch_size=True, overall_epochs=True,
-            optimizer_name=True, num_layers=True, loss_method=False, epsilon=False):
+def autolog(accuracy=True, loss=True, learning_rate=True, epoch=True, step=True, batch_size=True, overall_epochs=True,
+            optimizer_name=True, number_of_layers=True, loss_method=False, epsilon=False):
     # The following line must be at top of the method
     autolog_inputs = locals()
 
@@ -115,14 +115,14 @@ def autolog(acc=True, loss=True, learning_rate=True, epoch=True, step=True, batc
     class KerasAutoMetricReporter(keras.callbacks.Callback):
         def on_train_begin(self, logs=None):
             _report_parameter_if_needed(autolog_inputs, 'optimizer_name', type(self.model.optimizer).__name__)
-            _report_metric_if_needed(autolog_inputs, 'num_layers', len(self.model.layers))
+            _report_metric_if_needed(autolog_inputs, 'number_of_layers', len(self.model.layers))
 
             self._report_parameter_from_model_optimizer('learning_rate', 'lr')
             self._report_parameter_from_model_optimizer('epsilon')
 
         def on_batch_end(self, batch, logs={}):
             _report_metric_if_needed(autolog_inputs, 'step', batch)
-            self._report_metric_from_logs_if_needed(autolog_inputs, "acc", logs)
+            self._report_metric_from_logs_if_needed(autolog_inputs, "acc", logs, metric_name="accuracy")
             self._report_metric_from_logs_if_needed(autolog_inputs, "loss", logs)
 
         def on_epoch_begin(self, epoch_val, logs=None):
@@ -143,6 +143,11 @@ def autolog(acc=True, loss=True, learning_rate=True, epoch=True, step=True, batc
             value = parameter_from_model if type(parameter_from_model) is float else keras.backend.eval(parameter_from_model)
             reportParameter(metric_name, value)
 
-        def _report_metric_from_logs_if_needed(self, autolog_inputs, key, logs):
-            if key in logs:
-                _report_metric_if_needed(autolog_inputs, key, logs[key])
+        def _report_metric_from_logs_if_needed(self, autolog_inputs, key_in_logs, logs, metric_name=None):
+            if key_in_logs not in logs:
+                return
+
+            if not metric_name:
+                metric_name = key_in_logs
+
+            _report_metric_if_needed(autolog_inputs, metric_name, logs[key_in_logs])
