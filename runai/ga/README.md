@@ -29,7 +29,7 @@ pip install runai
 First you need to add the following import command to your code:
 
 ```
-import runai.ga
+import runai.ga.keras
 ```
 
 Then, you need to choose one of the two possible ways to use gradient accumulation:

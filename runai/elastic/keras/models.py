@@ -1,7 +1,7 @@
 import keras.optimizers
 
 import runai.elastic
-import runai.ga
+import runai.ga.keras
 import runai.utils
 
 def compile(self, *args, **kwargs):
@@ -17,10 +17,10 @@ def compile(self, *args, **kwargs):
         raise ValueError("'optimizer' must be a valid keras.optimizers.Optimizer")
 
     runai.utils.log.debug('compile() called with optimizer %s', optimizer)
-    
+
     if runai.elastic.gpus > 1:
         runai.utils.log.debug('Wrapping optimizer with Horovod')
-        
+
         import horovod.keras as hvd
         optimizer = hvd.DistributedOptimizer(optimizer)
 
@@ -65,7 +65,7 @@ def Model(model):
     for method in [compile, fit, fit_generator]: # TODO(levosos): what about evaluate() and predict()?
         __runai__[method.__name__] = getattr(model, method.__name__)
         setattr(model, method.__name__, method.__get__(model))
-    
+
     setattr(model, '__runai__', __runai__)
-    
+
     return model
