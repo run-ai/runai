@@ -10,3 +10,6 @@ def string(length=5):
 
 def strings(count=number(2, 10)):
     return [string() for _ in range(count)]
+
+def shape():
+    return tuple([number(2, 5) for _ in range(number(2, 4))])

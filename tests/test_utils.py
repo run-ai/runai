@@ -107,6 +107,17 @@ class TestRandom(unittest.TestCase):
             self.assertGreaterEqual(number, MIN)
             self.assertLessEqual(number, MAX)
 
+    def test_shape(self):
+        for i in range(10000):
+            shape = runai.utils.random.shape()
+            self.assertIsInstance(shape, tuple)
+            self.assertGreaterEqual(len(shape), 2)
+            self.assertLessEqual(len(shape), 4)
+
+            for size in shape:
+                self.assertGreaterEqual(len(shape), 2)
+                self.assertLessEqual(len(shape), 5)
+
 class TestAttribute(unittest.TestCase):
     def test_scope_single(self):
         obj = Object()
