@@ -10,12 +10,12 @@ from keras.preprocessing.image import ImageDataGenerator
 import keras.utils
 from skimage.transform import resize
 
-import runai.elastic
+import runai.elastic.keras
 
 EPOCHS = 1
 DATA_AUGMENTATION = True
 
-runai.elastic.init(global_batch_size=64, max_gpu_batch_size=16)
+runai.elastic.keras.init(global_batch_size=64, max_gpu_batch_size=16)
 
 class StepTimeReporter(keras.callbacks.Callback):
     def on_batch_begin(self, batch, logs={}):

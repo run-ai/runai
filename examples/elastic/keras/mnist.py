@@ -6,9 +6,9 @@ import keras
 from keras.models import Sequential
 from keras.layers import Dense, Dropout
 
-import runai.elastic
+import runai.elastic.keras
 
-runai.elastic.init(global_batch_size=128, max_gpu_batch_size=16)
+runai.elastic.keras.init(global_batch_size=128, max_gpu_batch_size=16)
 
 NUM_CLASSES = 10
 
