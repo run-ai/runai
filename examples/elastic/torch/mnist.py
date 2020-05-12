@@ -50,8 +50,8 @@ def parse_args():
                         help='maximum GPU batch size for training (default: 32)')
     parser.add_argument('--samples', type=int, default=0, metavar='N',
                         help='number of samples to use from the train dataset (default: all)')
-    parser.add_argument('--test-batch-size', type=int, default=1000, metavar='N',
-                        help='input batch size for testing (default: 1000)')
+    parser.add_argument('--test-batch-size', type=int, default=128, metavar='N',
+                        help='input batch size for testing (default: 128)')
     parser.add_argument('--test-samples', type=int, default=0, metavar='N',
                         help='number of samples to use from the test dataset (default: all)')
     parser.add_argument('--shuffle', action='store_true', default=False,
