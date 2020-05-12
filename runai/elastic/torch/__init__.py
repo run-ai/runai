@@ -1,5 +1,8 @@
 import runai.elastic
 
-# we have nothing else to do other than calculating
-# the number of GA steps and the batch size
-init = runai.elastic._init
+def init(global_batch_size, max_gpu_batch_size, gpus=None):
+    if gpus is None:
+        import torch.cuda
+        gpus = torch.cuda.device_count()
+
+    runai.elastic._init(global_batch_size, max_gpu_batch_size, gpus)
