@@ -1,6 +1,6 @@
 # Run:AI Python library
 
-Public functional modules for Keras and TF
+Public functional modules for Keras, TF and PyTorch
 
 ## Info
 
@@ -15,8 +15,8 @@ This library consists of a few pretty much independent submodules:
 
 | Module | Name | Info |
 |--------|------|------|
-| Elastic | `elastic` | Make Keras models elastic |
-| Gradient Accumulation | `ga` | [Gradient accumulation for Keras optimizers](runai/ga/README.md) |
+| Elastic | `elastic` | Make Keras and PyTorch models elastic |
+| Gradient Accumulation | `ga` | [Gradient accumulation for Keras and PyTorch optimizers](runai/ga/README.md) |
 | Model Parallelism | `mp` | Model-parallelism support for Keras builtin layers |
 | Auto Profiler | `profiler` | Export timeline of TF/Keras models easily |
 | Reporter | `reporter` | [An interface to send metrics and parameters to Promethues Push Gateway](runai/reporter/README.md) |
