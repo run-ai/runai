@@ -3,7 +3,8 @@ from keras.datasets import mnist
 from keras.models import Sequential
 from keras.layers import Dense, Dropout
 import time
-from runai.reporter import autolog, reportParameter, reportMetric
+from runai.reporter import reportParameter
+from runai.reporter.keras import autolog
 import keras.optimizers
 
 NUM_CLASSES = 10
