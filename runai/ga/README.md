@@ -1,6 +1,6 @@
 # Run:AI Gradient Accumulation
 
-A generic gradient accumulation wrapper for Keras optimizers
+A generic gradient accumulation wrapper for Keras and PyTorch optimizers
 
 ## References
 
@@ -12,7 +12,7 @@ We published a series of articles on Medium related to gradient accumulation. Th
 
 ## Getting Started
 
-Follow the next instructions to use gradient accumulation in your own Keras models, or with one of our examples of basic Keras models.
+Follow the next instructions to use gradient accumulation in your own Keras and PyTorch models, or with one of our examples of basic models.
 
 ### Installing
 
@@ -26,25 +26,47 @@ pip install runai
 
 ### Usage
 
-First you need to add the following import command to your code:
+First you need to import the respective package to your code.
+Import the subpackage in respect to the framework you are using.
+
+If you are using Keras, use the following line:
 
 ```
 import runai.ga.keras
+```
+
+If you are using PyTorch, use the following line:
+
+```
+import runai.ga.torch
 ```
 
 Then, you need to choose one of the two possible ways to use gradient accumulation:
 
 #### Wrap an existing optimizer with gradient accumulation
 
-In case you have an instance of a `Keras.Optimizer`, especially if you have implemented an optimizer by yourself, you should wrap your `optimizer` using the following line:
+In case you have an instance of a Keras or PyTorch optimizer, especially if you have implemented an optimizer by yourself, you should wrap your `optimizer` with GA.
+
+If you are using Keras, use the following line:
 
 ```
 optimizer = runai.ga.keras.optimizers.Optimizer(optimizer, steps=STEPS)
 ```
 
+If you are using PyTorch, use the following line:
+
+```
+optimizer = runai.ga.torch.optim.Optimizer(optimizer, steps=STEPS)
+```
+
 #### Create a gradient-accumulated common optimizer
 
-You can create an instance of any common Keras optimizer, already wrapped with gradient accumulation, out of the box. Just create an instance of the your selected optimizer from `runai.ga.keras.optimizers`. For example, to create an `Adam` optimizer, wrapped with gradient accumulation, you can use the following command:
+You can create an instance of any common optimizer, already wrapped with gradient accumulation, out of the box.
+
+Just create an instance of the your selected optimizer from the Run:AI library.
+Import the optimizer either from `runai.ga.keras.optimizers` or from `runai.ga.torch.optim`.
+
+For example, to create an `Adam` Keras optimizer, wrapped with gradient accumulation, you can use the following command:
 
 ```
 optimizer = runai.ga.keras.optimizers.Adam(steps=STEPS)
@@ -56,9 +78,17 @@ Both ways require an argument `steps` to indicate the number of steps to accumul
 
 ## Examples
 
-Examples of wrappring Keras optimizers with gradient accumulation exist under the [examples](../../examples/ga/keras) directory:
+Examples of wrappring Keras optimizers with gradient accumulation exist under the [examples](../../examples/ga) directory:
+
+### Keras
 
 * [VGG16](../../examples/ga/keras/vgg16.py) - **Recommended** - A very lean and simple example using the Keras builtin implementation of VGG16 on the CIFAR10 dataset
 * [MLP](../../examples/ga/keras/mlp.py) - A very simple implementation of an MLP network on the MNIST dataset
 
 > *NOTE:* The examples were tested using Python 3.6, Keras 2.2.4, TensorFlow 1.15.0
+
+### PyTorch
+
+* [MNIST](../../examples/ga/torch/mnist.py) - **Recommended** - A simple example of a CNN model on MNIST
+
+> *NOTE:* The example was tested using Python 3.6, PyTorch 1.5.0
