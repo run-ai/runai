@@ -15,7 +15,7 @@ This library consists of a few pretty much independent submodules:
 
 | Module | Name | Info |
 |--------|------|------|
-| Elastic | `elastic` | Make Keras and PyTorch models elastic |
+| Elastic | `elastic` | [Make Keras and PyTorch models elastic](runai/elastic/README.md) |
 | Gradient Accumulation | `ga` | [Gradient accumulation for Keras and PyTorch optimizers](runai/ga/README.md) |
 | Model Parallelism | `mp` | Model-parallelism support for Keras builtin layers |
 | Auto Profiler | `profiler` | Export timeline of TF/Keras models easily |

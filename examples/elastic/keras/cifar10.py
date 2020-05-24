@@ -1,4 +1,4 @@
-# horovodrun -np `nvidia-smi --list-gpus | wc -l` -H localhost:`nvidia-smi --list-gpus | wc -l` python examples/elastic/keras/hvd_cifar10.py
+# horovodrun -np `nvidia-smi --list-gpus | wc -l` -H localhost:`nvidia-smi --list-gpus | wc -l` python examples/elastic/keras/cifar10.py
 
 import time
 
