@@ -39,7 +39,7 @@ class TestHook(unittest.TestCase):
 
     def test_object(self):
         o = Object()
-        
+
         assert o.foo() == 42
 
         with Hook(o):
@@ -51,10 +51,10 @@ class TestHook(unittest.TestCase):
         o = Object()
         hook = Hook(o)
         assert o.foo() == 42
-        
+
         hook.enable()
         assert o.foo() == 217
-        
+
         hook.disable()
         assert o.foo() == 42
 
@@ -63,10 +63,10 @@ class TestHook(unittest.TestCase):
             @staticmethod
             def foo(x):
                 return x + 10
-        
+
         def hook(x):
             return Module.foo(x) + 1
-        
+
         for recursion in [True, False]:
             with runai.utils.Hook(Module, 'foo', hook, recursion=recursion):
                 if recursion:
@@ -89,8 +89,34 @@ class TestRandom(unittest.TestCase):
 
     def test_strings(self):
         count = runai.utils.random.number(5, 10)
-        
+
         assert len(runai.utils.random.strings(count=count)) == count
+
+    def test_number(self):
+        DEFAULT_MIN = 10
+        DEFAULT_MAX = 100
+        for i in range(10000):
+            number = runai.utils.random.number() # no arguments
+            self.assertGreaterEqual(number, DEFAULT_MIN)
+            self.assertLessEqual(number, DEFAULT_MAX)
+
+        MIN = 2
+        MAX = 217
+        for i in range(10000):
+            number = runai.utils.random.number(MIN, MAX)
+            self.assertGreaterEqual(number, MIN)
+            self.assertLessEqual(number, MAX)
+
+    def test_shape(self):
+        for i in range(10000):
+            shape = runai.utils.random.shape()
+            self.assertIsInstance(shape, tuple)
+            self.assertGreaterEqual(len(shape), 2)
+            self.assertLessEqual(len(shape), 4)
+
+            for size in shape:
+                self.assertGreaterEqual(len(shape), 2)
+                self.assertLessEqual(len(shape), 5)
 
 class TestAttribute(unittest.TestCase):
     def test_scope_single(self):
@@ -103,9 +129,9 @@ class TestAttribute(unittest.TestCase):
 
         with runai.utils.Attribute(obj, name, value):
             assert getattr(obj, name) == value
-        
+
         assert not hasattr(obj, name)
-        
+
     def test_scope_multiple(self):
         obj = Object()
 
@@ -120,10 +146,10 @@ class TestAttribute(unittest.TestCase):
         with runai.utils.Attribute(obj, names, values):
             for name, value in zip(names, values):
                 assert getattr(obj, name) == value
-        
+
         for name in names:
             assert not hasattr(obj, name)
-    
+
     def test_rename(self):
         obj = Object()
 
@@ -137,7 +163,7 @@ class TestAttribute(unittest.TestCase):
         assert not hasattr(obj, new)
 
         runai.utils.attribute.rename(obj, old, new)
-        
+
         assert not hasattr(obj, old)
         assert getattr(obj, new) == value
 

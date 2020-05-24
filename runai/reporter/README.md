@@ -38,7 +38,15 @@ First you need to add the following import command to your code:
 import runai.reporter
 ```
 
-### Methods
+If you are using Keras, you may also want to import the following command for auto-logging:
+
+```
+import runai.reporter.keras
+```
+
+> INFO: Keras related methods are in a sub-package to support non-Keras environments as well
+
+### Methods of `runai.reporter`
 #### reportMetric
 
 Sends a metric with the following name "reporter_push_gateway_metric_[reporter_metric_name]".
@@ -55,15 +63,15 @@ Sends a parameter with the following name "reporter_push_gateway_metric_[reporte
 runai.reporter.reportParameter('loss_method', 'categorical_crossentropy')
 ```
 
+### Methods of `runai.reporter.keras`
 #### autolog
 
 Enables automatic metrics and parameters updates for Keras.
 ##### usage:
 Simply add the following line before running the model
 ```
-runai.reporter.autolog()
+runai.reporter.keras.autolog()
 ```
-
 
 #### disableAutolog
 
@@ -71,5 +79,5 @@ Disables automatic metrics and parameters updates from Keras fit, fit_generator 
 ##### usage:
 Simply add the following line before running the model
 ```
-runai.reporter.disableAutolog()
+runai.reporter.keras.disableAutolog()
 ```

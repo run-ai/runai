@@ -8,7 +8,7 @@ from keras.models import Sequential
 from keras.layers import Dense, Dropout
 
 import keras.optimizers
-import runai.ga
+import runai.ga.keras
 
 NUM_CLASSES = 10
 BATCH_SIZE = 10

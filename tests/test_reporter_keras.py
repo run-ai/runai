@@ -11,6 +11,7 @@ from keras.preprocessing.image import ImageDataGenerator
 
 import runai.utils
 import runai.reporter
+import runai.reporter.keras
 
 NUM_CLASSES = 10
 BATCH_SIZE = 16
@@ -18,7 +19,7 @@ STEPS_PER_EPOCH = 1
 
 class MockReporter(runai.utils.Hook):
     def __init__(self, methodName):
-        super(MockReporter, self).__init__(runai.reporter.keras_metric_reporter, methodName)
+        super(MockReporter, self).__init__(runai.reporter.keras.keras_metric_reporter, methodName)
         self.reported = []
 
     def __hook__(self, *args, **kwargs):
@@ -85,35 +86,35 @@ class KerasAutologTest(unittest.TestCase):
         self._run_test()
 
     def testFitWithAutoLog(self):
-        runai.reporter.autolog()
+        runai.reporter.keras.autolog()
         expected_metrics = ['overall_epochs', 'batch_size', 'number_of_layers', 'epoch', 'step', 'accuracy', 'loss']
         expected_parameters = ['optimizer_name', 'learning_rate']
         self._run_test(expected_metrics=expected_metrics, expected_parameters=expected_parameters)
-        runai.reporter.disableAutoLog()
+        runai.reporter.keras.disableAutoLog()
 
     def testFitAllMetrics(self):
-        runai.reporter.autolog(loss_method=True, epsilon=True)
+        runai.reporter.keras.autolog(loss_method=True, epsilon=True)
         expected_metrics = ['overall_epochs', 'batch_size', 'number_of_layers', 'epoch', 'step', 'accuracy', 'loss']
         expected_parameters = ['loss_method', 'optimizer_name', 'learning_rate', 'epsilon']
         self._run_test(expected_metrics=expected_metrics, expected_parameters=expected_parameters)
-        runai.reporter.disableAutoLog()
+        runai.reporter.keras.disableAutoLog()
 
     def testFitGeneratorWithoutAutoLog(self):
         self._run_test(run_fit=False)
 
     def testFitGeneratorWithAutoLog(self):
-        runai.reporter.autolog()
+        runai.reporter.keras.autolog()
         expected_metrics = ['overall_epochs', 'number_of_layers', 'epoch', 'step', 'accuracy', 'loss']
         expected_parameters = ['optimizer_name', 'learning_rate']
         self._run_test(run_fit=False, expected_metrics=expected_metrics, expected_parameters=expected_parameters)
-        runai.reporter.disableAutoLog()
+        runai.reporter.keras.disableAutoLog()
 
     def testFitGeneratorAllMetrics(self):
-        runai.reporter.autolog(loss_method=True, epsilon=True)
+        runai.reporter.keras.autolog(loss_method=True, epsilon=True)
         expected_metrics = ['overall_epochs', 'number_of_layers', 'epoch', 'step', 'accuracy', 'loss']
         expected_parameters = ['loss_method', 'optimizer_name', 'learning_rate', 'epsilon']
         self._run_test(run_fit=False, expected_metrics=expected_metrics, expected_parameters=expected_parameters)
-        runai.reporter.disableAutoLog()
+        runai.reporter.keras.disableAutoLog()
 
     #TODO: Add tests that will add new metrics to the compile method and verify they were added.
 
