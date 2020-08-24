@@ -70,4 +70,4 @@ runai.hpo.report(epoch=5, metrics={ 'accuracy': 0.87 })
 ### Examples
 
 Examples are available [here](../../examples/hpo):
-- [VGG16](../../examples/hpo/vgg16.py) - A simple usage of Run:AI HPO Assistance on a VGG16 model
+- [VGG16](../../examples/hpo/vgg16.py) - A simple usage of Run:AI HPO Support on a VGG16 model
