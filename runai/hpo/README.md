@@ -1,4 +1,4 @@
-# Run:AI HPO Assistance
+# Run:AI HPO Support
 
 A helper library for hyperparameter optimization (HPO) experiments
 
@@ -6,7 +6,7 @@ A helper library for hyperparameter optimization (HPO) experiments
 
 ### Prerequisites
 
-Run:AI HPO Assistance library is dependent on [PyYAML](https://github.com/yaml/pyyaml).
+Run:AI HPO library is dependent on [PyYAML](https://github.com/yaml/pyyaml).
 Install it using the command:
 
 ```
