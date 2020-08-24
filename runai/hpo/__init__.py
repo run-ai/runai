@@ -19,7 +19,23 @@ class Strategy(enum.Enum):
     GridSearch = 0
     RandomSearch = 1
 
-def init(root):
+def init(root, subdir=None):
+    """ Initialize Run:AI HPO Assistance
+
+    arguments:
+      - root: The root shared directory (most commonly over NFS). The root directory must exist.
+      - subdir (optional): If passed, a subdirectory with this name will be created under `root`.
+    """
+
+    if subdir is not None:
+        root = os.path.join(root, subdir)
+
+        expected = FileExistsError if sys.version_info[0] == 3 else OSError
+        try:
+            os.mkdir(root)
+            runai.utils.log.debug('Created experiment directory at %s', root)
+        except expected: pass # another experiment has already created it
+
     flock = runai.utils.Flock(os.path.join(root, 'runai.yaml.lock'))
     path = os.path.join(root, 'runai.yaml')
 
