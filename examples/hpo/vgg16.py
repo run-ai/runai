@@ -5,12 +5,25 @@ import keras
 # import Run:AI HPO assistance library
 import runai.hpo
 
-if len(sys.argv) != 2:
-    print("usage: python %s <HPO directory>" % sys.argv[0])
+def usage():
+    print("usage: python %s <HPO directory> [strategy: random | grid; default: grid]" % sys.argv[0])
     exit(1)
+
+if len(sys.argv) != 2 and len(sys.argv) != 3:
+    usage()
 
 hpo_dir = sys.argv[1]
 print("Using HPO directory %s" % hpo_dir)
+
+if len(sys.argv) == 3:
+    if sys.argv[2] == 'grid':
+        strategy = runai.hpo.Strategy.GridSearch
+    elif sys.argv[2] == 'random':
+        strategy = runai.hpo.Strategy.RandomSearch
+    else:
+        usage()
+else:
+    strategy = runai.hpo.Strategy.GridSearch
 
 # initialize the Run:AI HPO assistance library
 runai.hpo.init(hpo_dir)
@@ -18,12 +31,11 @@ runai.hpo.init(hpo_dir)
 # pick a configuration for this HPO experiment
 # we pass the options of all hyperparameters we want to test
 # `config` will hold a single value for each parameter
-config = runai.hpo.pick(dict(
-    batch_size=[32, 64, 128],
-    lr=[1, 0.1, 0.01, 0.001],
-))
-
-print('Using configuration: %s' % str(config))
+config = runai.hpo.pick(
+    grid=dict(
+        batch_size=[32, 64, 128],
+        lr=[1, 0.1, 0.01, 0.001]),
+    strategy=strategy)
 
 (x_train, y_train), (x_test, y_test) = keras.datasets.cifar10.load_data()
 

@@ -1,6 +1,8 @@
 import datetime
+import enum
 import itertools
 import os
+import random
 import signal
 import sys
 
@@ -12,6 +14,10 @@ class Status:
     Unassigned = 'unassigned'
     Assigned = 'assigned'
     Preempted = 'preempted'
+
+class Strategy(enum.Enum):
+    GridSearch = 0
+    RandomSearch = 1
 
 def init(root):
     flock = runai.utils.Flock(os.path.join(root, 'runai.yaml.lock'))
@@ -54,7 +60,7 @@ def init(root):
 
     signal.signal(signal.SIGTERM, handler)
 
-def pick(grid):
+def pick(grid, strategy):
     flock = getattr(sys.modules[__name__], 'flock')
     path = getattr(sys.modules[__name__], 'path')
 
@@ -62,25 +68,27 @@ def pick(grid):
         if not os.path.isfile(path): # the first experiment will create the YAML under the lock
             runai.utils.log.debug('Creating HPO YAML file at %s', path)
 
-            parameters = []
-            iterables = []
-            for parameter in grid:
-                parameters.append(parameter)
-                iterables.append(grid[parameter])
-
-            experiments = []
-            for combination in itertools.product(*iterables):
-                experiment = dict(
-                    id=len(experiments) + 1,
-                    status=Status.Unassigned,
-                    config={ parameters[j]: combination[j] for j in range(len(parameters)) },
-                )
-                experiments.append(experiment)
-
             data = dict(
                 creationTime=datetime.datetime.now().strftime('%d/%m/%Y %H:%M:%S'),
-                experiments=experiments,
             )
+
+            if strategy == Strategy.GridSearch: # in grid search we generate all experiments in advance
+                parameters = []
+                iterables = []
+                for parameter in grid:
+                    parameters.append(parameter)
+                    iterables.append(grid[parameter])
+
+                experiments = []
+                for combination in itertools.product(*iterables):
+                    experiment = dict(
+                        id=len(experiments) + 1,
+                        status=Status.Unassigned,
+                        config={ parameters[j]: combination[j] for j in range(len(parameters)) },
+                    )
+                    experiments.append(experiment)
+
+                data['experiments'] = experiments
 
             with open(path, 'w') as f:
                 yaml.dump(data, f)
@@ -90,16 +98,33 @@ def pick(grid):
         with open(path, 'r') as f:
             data = yaml.load(f, Loader=yaml.FullLoader)
 
-        experiment = None
+        if strategy == Strategy.GridSearch: # pick an unassigned or a preempted experiment
+            experiment = None
+            for prospect in data['experiments']:
+                if prospect['status'] in [Status.Unassigned, Status.Preempted]:
+                    experiment = prospect
+                    break
+            assert experiment is not None, 'Could not find an unassigned HPO experiment'
+            runai.utils.log.info('Picked %sHPO experiment #%d with configuration %s', ('preempted ' if experiment['status'] == Status.Preempted else ''), experiment['id'], experiment['config'])
+        elif strategy == Strategy.RandomSearch: # continue a preempted experiment or randomize a new one
+            if 'experiments' not in data:
+                data['experiments'] = []
 
-        for prospect in data['experiments']:
-            if prospect['status'] in [Status.Unassigned, Status.Preempted]:
-                experiment = prospect
-                break
+            # first check if there are any preempted experiments that should be continued
+            preempted = [experiment for experiment in data['experiments'] if experiment['status'] == Status.Preempted]
 
-        assert experiment is not None, 'Could not find an unassigned HPO experiment'
-
-        runai.utils.log.info('Picked %sHPO experiment #%d', ('preempted ' if experiment['status'] == Status.Preempted else ''), experiment['id'])
+            if len(preempted) > 0: # if there are, continue the first one
+                experiment = preempted[0]
+                runai.utils.log.info('Continuing preempted HPO experiment #%d with configuration %s', experiment['id'], experiment['config'])
+            else:
+                experiment = dict(
+                    id=1 if len(data['experiments']) == 0 else (max([experiment['id'] for experiment in data['experiments']]) + 1),
+                    config={ parameter: random.choice(grid[parameter]) for parameter in grid },
+                )
+                runai.utils.log.info('Randomized HPO experiment #%d with configuration %s', experiment['id'], experiment['config'])
+                data['experiments'].append(experiment)
+        else:
+            raise ValueError('Unrecognized strategy %s' % str(strategy))
 
         # mark the experiment as assigned
         experiment['status'] = Status.Assigned
