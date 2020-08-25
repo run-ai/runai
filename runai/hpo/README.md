@@ -25,28 +25,31 @@ pip install runai
 
 ### Usage
 
-First you need to import the package.
+* Import the ``runai.hpo`` package.
 
 ```
 import runai.hpo
 ```
 
-Then, initialize the Run:AI HPO library with a path to a shared directory (probably on an NFS server).
-It's possible and recommended to also specify a unique name for the experiment, so the same shared folder (or NFS root directory) could be used across different HPO experiments.
+* Initialize the Run:AI HPO library with a path to a directory shared between all cluster nodes (typically using an NFS server).
+We recommend specifying a unique name for the experiment, the name will be used to create a sub-directory on the shared folder. 
 
 ```
 runai.hpo.init('/path/to/nfs', 'model-abcd-hpo')
 ```
 
-Then, ask the HPO library to pick a configuration for this experiment.
-You should specify a dictionary of all hyperparameters and all their options, as well as a strategy for picking the values.
-There are two strategies for HPO:
-- Random search - randomlly pick a set of hyperparameter values
-- Grid search - pick the next set of hyperparameter values, iterating through all sets across multiple experiments
+* Decide on an HPO strategy:
+    *  Random search - randomlly pick a set of hyperparameter values
+    *  Grid search - pick the next set of hyperparameter values, iterating through all sets across multiple experiments
 
 ```
 strategy = runai.hpo.Strategy.GridSearch
+```
 
+
+* Call the Run:AI HPO library to specify a set of hyperparameters and pick a specific configuration for this experiment.
+
+```
 config = runai.hpo.pick(
     grid=dict(
         batch_size=[32, 64, 128],
@@ -54,7 +57,7 @@ config = runai.hpo.pick(
     strategy=strategy)
 ```
 
-Then, use the returned configuration in your code. For example:
+* Use the returned configuration in your code. For example:
 
 ```
 optimizer = keras.optimizers.SGD(lr=config['lr'])
@@ -65,6 +68,7 @@ You should pass the epoch number and a dictionary with metrics to be reported. F
 ```
 runai.hpo.report(epoch=5, metrics={ 'accuracy': 0.87 })
 ```
+
 > This is an example with hard-coded values. In real life, you'll want to pass some other variables
 
 ### Examples
