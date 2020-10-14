@@ -3,6 +3,8 @@ from os import environ
 
 from prometheus_client import CollectorRegistry, Gauge, pushadd_to_gateway
 
+import runai.utils
+
 GROUPING_KEY = "podUUID"
 GATEWAY_URL_KEY = "reporterGatewayURL"
 PUSH_GATEWAY_JOB_NAME = "reporter_pod_info"
@@ -20,6 +22,9 @@ def reportParameter(reporter_param_name, reporter_param_value):
     createGaugeAndPushToGateway(reporter_param_name, reporter_param_value, ReportType.parameter)
 
 def createGaugeAndPushToGateway(reporter_name, reporter_value, report_type):
+    if createGaugeAndPushToGateway.FAILED:
+        return
+
     registry = CollectorRegistry()
 
     if report_type is ReportType.metric:
@@ -38,5 +43,11 @@ def createGaugeAndPushToGateway(reporter_name, reporter_value, report_type):
 
     gauge.labels(*label_values).set(gauge_value)
 
-    pushadd_to_gateway(gateway=environ[GATEWAY_URL_KEY], job=PUSH_GATEWAY_JOB_NAME,
-                       registry=registry, grouping_key={GROUPING_KEY: environ[GROUPING_KEY]})
+    try:
+        pushadd_to_gateway(gateway=environ[GATEWAY_URL_KEY], job=PUSH_GATEWAY_JOB_NAME,
+                        registry=registry, grouping_key={GROUPING_KEY: environ[GROUPING_KEY]})
+    except IOError as e:
+        runai.utils.log.error('Failed pushing registry to push gateway (%s)', e)
+        createGaugeAndPushToGateway.FAILED = True
+
+createGaugeAndPushToGateway.FAILED = False
