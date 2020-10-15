@@ -10,14 +10,18 @@ class Hook(object):
         def hook(*args, **kwargs):
             if hook.called and not self.recursion:
                 return self.__original__(*args, **kwargs)
-            
+
             hook.called = True
-            result = self.hook(*args, **kwargs)
-            hook.called = False
+
+            try:
+                result = self.hook(*args, **kwargs)
+            finally:
+                hook.called = False
+
             return result
-        
+
         hook.called = False
-        
+
         setattr(self.module, self.method, hook)
 
     def disable(self):
@@ -29,6 +33,6 @@ class Hook(object):
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.disable()
-    
+
     def __hook__(self):
         raise NotImplementedError()
