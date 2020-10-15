@@ -3,7 +3,7 @@ from keras.datasets import mnist
 from keras.models import Sequential
 from keras.layers import Dense, Dropout
 import time
-from runai.reporter import reportParameter
+from runai.reporter import reportParameter, finish
 from runai.reporter.keras import autolog
 import keras.optimizers
 
@@ -54,3 +54,6 @@ history = model.fit(x_train, y_train,
                     validation_data=(x_test, y_test))
 
 reportParameter("current_state", "done")
+
+# gracefully shut down the Run:AI reporting library
+finish()
