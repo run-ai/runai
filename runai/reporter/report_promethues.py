@@ -90,10 +90,9 @@ class Worker(multiprocessing.Process):
         # wait for it to finish
         self.join()
 
-        # make sure it finished successfully
+        # log if it finished unsuccessfully
         if self.exitcode != 0:
-            runai.utils.log.error('Reporting process %d terminated unsuccessfully (%d)' % (self.pid, self.exitcode))
-            raise RuntimeError()
+            runai.utils.log.warning('Reporting process %d terminated unsuccessfully (%d)' % (self.pid, self.exitcode))
 
         runai.utils.log.debug('Reporting process (%d) finished', self.pid)
 

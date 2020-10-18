@@ -120,8 +120,11 @@ class ReporterPromethuesWorkerTest(ReporterPromethuesBaseTest):
                 for _ in range(random.number(2, 20)):
                     worker.send(random_args())
 
-                with self.assertRaises(RuntimeError):
+                # `finish` should not fail even if the worker failed
+                try:
                     worker.finish()
+                except:
+                    self.fail('`finish` was not expected to raise an error')
 
 class ReporterPromethuesReportTest(ReporterPromethuesBaseTest):
     def tearDown(self):
@@ -139,16 +142,22 @@ class ReporterPromethuesReportTest(ReporterPromethuesBaseTest):
             self.assertTrue(report_promethues.WORKER.daemon)
 
     def testFinish(self):
-        with Mock():
-            for _ in range(random.number(2, 5)):
-                report_promethues.report(*random_args())
+        for error in [None, ImportError, IndexError, KeyError, ValueError]:
+            with Mock(error):
+                for _ in range(random.number(2, 5)):
+                    report_promethues.report(*random_args())
 
-                pid = report_promethues.WORKER.pid
-                self.assertTrue(pid_exists(pid))
+                    pid = report_promethues.WORKER.pid
+                    self.assertTrue(pid_exists(pid))
 
-                report_promethues.finish()
-                self.assertFalse(pid_exists(pid))
-                self.assertIsNone(report_promethues.WORKER)
+                    # `finish` should not fail even if the worker failed
+                    try:
+                        report_promethues.finish()
+                    except:
+                        self.fail('`finish` was not expected to raise an error')
+
+                    self.assertFalse(pid_exists(pid))
+                    self.assertIsNone(report_promethues.WORKER)
 
 if __name__ == '__main__':
     unittest.main()
