@@ -68,7 +68,12 @@ class Worker(multiprocessing.Process):
                 # successfully and we can finish running
                 break
 
-            push(*msg)
+            # we catch all errors as this process should
+            # be running until told to stop
+            try:
+                push(*msg)
+            except:
+                pass
 
     def __init__(self, *args, **kwargs):
         # create a shared queue for this process and the worker process
@@ -89,10 +94,6 @@ class Worker(multiprocessing.Process):
 
         # wait for it to finish
         self.join()
-
-        # log if it finished unsuccessfully
-        if self.exitcode != 0:
-            runai.utils.log.warning('Reporting process %d terminated unsuccessfully (%d)' % (self.pid, self.exitcode))
 
         runai.utils.log.debug('Reporting process (%d) finished', self.pid)
 
