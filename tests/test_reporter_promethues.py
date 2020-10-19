@@ -3,7 +3,7 @@ import string
 import unittest
 
 from runai.utils import Hook, random
-from runai.reporter import report_promethues
+from runai.reporter import report_promethues, Reporter
 
 def random_args():
     reporter_name = random.string(chars=string.ascii_letters + string.digits)
@@ -84,70 +84,84 @@ class ReporterPromethuesPushTest(ReporterPromethuesBaseTest):
                 self._push()
                 self.assertEqual(mock.count, report_promethues.RETRIES)
 
-class ReporterPromethuesWorkerTest(ReporterPromethuesBaseTest):
+class ReporterPromethuesReporterTest(ReporterPromethuesBaseTest):
     def testCreationManual(self):
         for daemon in [True, False]:
-            worker = report_promethues.Worker()
+            reporter = Reporter()
 
-            worker.start(daemon=daemon)
-            self.assertTrue(pid_exists(worker.pid))
-            worker.finish()
-            self.assertFalse(pid_exists(worker.pid))
+            reporter.start(daemon=daemon)
+            self.assertTrue(pid_exists(reporter.pid))
+            reporter.finish()
+            self.assertFalse(pid_exists(reporter.pid))
 
     def testCreationScope(self):
-        with report_promethues.Worker() as worker:
-            self.assertTrue(pid_exists(worker.pid))
+        with Reporter() as reporter:
+            self.assertTrue(pid_exists(reporter.pid))
 
-        self.assertFalse(pid_exists(worker.pid))
+        self.assertFalse(pid_exists(reporter.pid))
+
+    def testReportMetric(self):
+        with Mock():
+            with Reporter() as reporter:
+                reporter.reportMetric(random.string(chars=string.ascii_letters), random.number())
+
+    def testReportParameter(self):
+        with Mock():
+            with Reporter() as reporter:
+                reporter.reportParameter(random.string(chars=string.ascii_letters), random.number())
 
     def testSend(self):
         with Mock():
-            with report_promethues.Worker() as worker:
-                worker.send(random_args())
+            with Reporter() as reporter:
+                reporter.send(random_args())
 
     def testSendIOError(self):
         with Mock(IOError):
-            with report_promethues.Worker() as worker:
+            with Reporter() as reporter:
                 for _ in range(random.number(2, 20)):
-                    worker.send(random_args())
+                    reporter.send(random_args())
+
+                self.assertTrue(pid_exists(reporter.pid))
 
     def testSendError(self):
-        for error in [ImportError, IndexError, KeyError, ValueError]:
+        for error in [IOError, ImportError, IndexError, KeyError, ValueError]:
             with Mock(error):
-                worker = report_promethues.Worker()
-                worker.start(daemon=False)
+                reporter = Reporter()
+                reporter.start(daemon=False)
 
                 for _ in range(random.number(2, 20)):
-                    worker.send(random_args())
+                    reporter.send(random_args())
 
-                # `finish` should not fail even if the worker failed
+                self.assertTrue(pid_exists(reporter.pid))
+
+                # `finish` should not fail even if the reporter failed
                 try:
-                    worker.finish()
+                    reporter.finish()
                 except:
                     self.fail('`finish` was not expected to raise an error')
 
-class ReporterPromethuesReportTest(ReporterPromethuesBaseTest):
+class ReporterPromethuesModuleTest(ReporterPromethuesBaseTest):
     def tearDown(self):
-        super(ReporterPromethuesReportTest, self).tearDown()
-        report_promethues.WORKER = None
+        super(ReporterPromethuesModuleTest, self).tearDown()
+        report_promethues.REPORTER = None
 
     def testInitialization(self):
-        self.assertIsNone(report_promethues.WORKER)
+        self.assertIsNone(report_promethues.REPORTER)
 
     def testSanity(self):
         with Mock():
-            self.assertIsNone(report_promethues.WORKER)
-            report_promethues.report(*random_args())
-            self.assertIsNotNone(report_promethues.WORKER)
-            self.assertTrue(report_promethues.WORKER.daemon)
+            self.assertIsNone(report_promethues.REPORTER)
+            report_promethues.send(*random_args())
+            self.assertIsNotNone(report_promethues.REPORTER)
+            self.assertTrue(report_promethues.REPORTER.daemon)
 
     def testFinish(self):
         for error in [None, ImportError, IndexError, KeyError, ValueError]:
             with Mock(error):
                 for _ in range(random.number(2, 5)):
-                    report_promethues.report(*random_args())
+                    report_promethues.send(*random_args())
 
-                    pid = report_promethues.WORKER.pid
+                    pid = report_promethues.REPORTER.pid
                     self.assertTrue(pid_exists(pid))
 
                     # `finish` should not fail even if the worker failed
@@ -157,7 +171,7 @@ class ReporterPromethuesReportTest(ReporterPromethuesBaseTest):
                         self.fail('`finish` was not expected to raise an error')
 
                     self.assertFalse(pid_exists(pid))
-                    self.assertIsNone(report_promethues.WORKER)
+                    self.assertIsNone(report_promethues.REPORTER)
 
 if __name__ == '__main__':
     unittest.main()

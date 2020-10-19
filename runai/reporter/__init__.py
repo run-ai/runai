@@ -1,1 +1,1 @@
-from .report_promethues import reportMetric, reportParameter, finish
+from .report_promethues import Reporter, reportMetric, reportParameter, finish

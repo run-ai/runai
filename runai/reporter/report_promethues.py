@@ -11,7 +11,7 @@ GATEWAY_URL_KEY = "reporterGatewayURL"
 PUSH_GATEWAY_JOB_NAME = "reporter_pod_info"
 REPORTER_PUSH_GATEWAY_METRIC_PREFIX = "reporter_push_gateway_metric"
 REPORTER_PUSH_GATEWAY_METRIC_PARAMETER = "reporter_push_gateway_parameter"
-WORKER = None
+REPORTER = None
 RETRIES = 3
 
 class ReportType(enum.Enum):
@@ -19,10 +19,10 @@ class ReportType(enum.Enum):
     parameter = 2
 
 def reportMetric(name, value):
-    report(name, value, ReportType.metric)
+    send(name, value, ReportType.metric)
 
 def reportParameter(name, value):
-    report(name, value, ReportType.parameter)
+    send(name, value, ReportType.parameter)
 
 def push(reporter_name, reporter_value, report_type):
     if push.failures >= RETRIES:
@@ -57,7 +57,7 @@ def push(reporter_name, reporter_value, report_type):
 
 push.failures = 0
 
-class Worker(multiprocessing.Process):
+class Reporter(multiprocessing.Process):
     @staticmethod
     def _impl(queue):
         while True:
@@ -80,11 +80,11 @@ class Worker(multiprocessing.Process):
         self._queue = multiprocessing.Queue()
 
         # initialize the process and pass the shared queue
-        super(Worker, self).__init__(target=Worker._impl, args=(self._queue,))
+        super(Reporter, self).__init__(target=Reporter._impl, args=(self._queue,))
 
     def start(self, daemon):
         self.daemon = daemon
-        super(Worker, self).start()
+        super(Reporter, self).start()
 
         runai.utils.log.debug('Started reporting worker process (%d)', self.pid)
 
@@ -110,11 +110,17 @@ class Worker(multiprocessing.Process):
     def send(self, msg):
         self._queue.put(msg)
 
-def report(*args):
-    global WORKER
+    def reportMetric(self, name, value):
+        send((name, value, ReportType.metric))
 
-    if WORKER is None:
-        WORKER = Worker()
+    def reportParameter(self, name, value):
+        send((name, value, ReportType.parameter))
+
+def send(*args):
+    global REPORTER
+
+    if REPORTER is None:
+        REPORTER = Reporter()
 
         # in general, processes have to be joined at the end of this process.
         # we don't want to have this as a fundamental requirement for using this
@@ -123,13 +129,13 @@ def report(*args):
         # this process will end, and this allows users to not explicitly call `finish`.
         # it's still recommended to call `finish` to ensure all reports have been
         # successfully processed and pushed
-        WORKER.start(daemon=True)
+        REPORTER.start(daemon=True)
 
-    WORKER.send(args)
+    REPORTER.send(args)
 
 def finish():
-    global WORKER
+    global REPORTER
 
-    if WORKER is not None:
-        WORKER.finish()
-        WORKER = None
+    if REPORTER is not None:
+        REPORTER.finish()
+        REPORTER = None
