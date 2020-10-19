@@ -1,1 +1,1 @@
-from .keras_metric_reporter import autolog, disableAutoLog
+from .keras_metric_reporter import Reporter, autologged, autolog, disableAutoLog
