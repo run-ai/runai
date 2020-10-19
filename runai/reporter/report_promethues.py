@@ -111,10 +111,10 @@ class Reporter(multiprocessing.Process):
         self._queue.put(msg)
 
     def reportMetric(self, name, value):
-        send((name, value, ReportType.metric))
+        self.send((name, value, ReportType.metric))
 
     def reportParameter(self, name, value):
-        send((name, value, ReportType.parameter))
+        self.send((name, value, ReportType.parameter))
 
 def send(*args):
     global REPORTER
