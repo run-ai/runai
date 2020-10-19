@@ -5,14 +5,10 @@ import keras
 import numpy as np
 import scipy # scipy.misc.imresize() is was removed in scipy-1.3.0
 
-import runai.reporter
 import runai.reporter.keras
 
 BATCH_SIZE = 64
 IMAGE_SIZE = 224
-
-print("Using Run:AI k8s reporting mechanism")
-runai.reporter.keras.autolog()
 
 def resize_images(src, shape):
     resized = [scipy.misc.imresize(img, shape, 'bilinear', 'RGB') for img in src]
@@ -82,45 +78,39 @@ class StepTimeReporter(keras.callbacks.Callback):
     def on_epoch_end(self, epoch, logs=None):
         print(' >> Epoch %d took %g sec' % (epoch, time.time() - self.epoch_start))
 
-def report(msg):
-    print(msg)
-    runai.reporter.reportParameter("state", msg)
-
 def main():
-    report("Loading data")
-    (x_train, y_train), (x_test, y_test) = cifar10_data(
-        train_samples=5000,
-        test_samples=1000,
-        num_classes=10,
-        trg_image_dim_size=IMAGE_SIZE,
-    )
+    with runai.reporter.keras.Reporter(autolog=True) as reporter:
+        reporter.reportParameter("state", "Loading data")
+        (x_train, y_train), (x_test, y_test) = cifar10_data(
+            train_samples=5000,
+            test_samples=1000,
+            num_classes=10,
+            trg_image_dim_size=IMAGE_SIZE,
+        )
 
-    report("Building model")
-    model = keras.applications.vgg19.VGG19(
-        input_shape=x_train[0].shape,
-        include_top=True,
-        weights=None,
-        input_tensor=None,
-        pooling=None,
-        classes=10)
+        reporter.reportParameter("state", "Building model")
+        model = keras.applications.vgg19.VGG19(
+            input_shape=x_train[0].shape,
+            include_top=True,
+            weights=None,
+            input_tensor=None,
+            pooling=None,
+            classes=10)
 
-    model.compile(loss='categorical_crossentropy',
-                  optimizer=keras.optimizers.SGD(lr=1e-3),
-                  metrics=['accuracy'])
+        model.compile(loss='categorical_crossentropy',
+                    optimizer=keras.optimizers.SGD(lr=1e-3),
+                    metrics=['accuracy'])
 
-    report("Training model")
-    model.fit(x_train, y_train,
-              batch_size=BATCH_SIZE,
-              epochs=10,
-              validation_data=(x_test, y_test),
-              shuffle=False,
-              verbose=1,
-              callbacks=[StepTimeReporter()])
+        reporter.reportParameter("state", "Training model")
+        model.fit(x_train, y_train,
+                batch_size=BATCH_SIZE,
+                epochs=10,
+                validation_data=(x_test, y_test),
+                shuffle=False,
+                verbose=1,
+                callbacks=[StepTimeReporter()])
 
-    report("Done")
-
-    # gracefully shut down the Run:AI reporting library
-    runai.reporter.finish()
+        reporter.reportParameter("state", "Done")
 
 if __name__ == "__main__":
     main()
