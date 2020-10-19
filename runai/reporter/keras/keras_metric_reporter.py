@@ -177,11 +177,17 @@ def autolog(accuracy=True, loss=True, learning_rate=True, epoch=True, step=True,
 
 class Reporter(runai.reporter.Reporter):
     def __init__(self, *args, **kwargs):
+        # pop 'autolog' out of kwargs if it exists
+        autolog = kwargs.pop('autolog', False)
+
+        # initialize the base reporter class
         super(Reporter, self).__init__(*args, **kwargs)
+
+        # autolog if needed
 
         self.autologged = False
 
-        if kwargs.pop('autolog', False):
+        if autolog:
             self.autolog()
 
     def autolog(self, *args, **kwargs):

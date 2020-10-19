@@ -75,7 +75,7 @@ class Reporter(multiprocessing.Process):
             except:
                 pass
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self):
         # create a shared queue for this process and the worker process
         self._queue = multiprocessing.Queue()
 
