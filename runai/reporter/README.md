@@ -20,6 +20,14 @@ It is required to have the following environment variables:
 
 These environment variables will be added to each pod when a job was created using the Run:AI CLI.
 
+### Reporting Options
+
+*Parameters:*
+Key-value input parameters of your choice. Key and value are strings.
+
+*Metrics:*
+Key-value input parameters of your choice. Key is a string, value is numeric.
+
 ## Usage
 
 ### Import
@@ -30,7 +38,7 @@ First you need to add the following import command to your code:
 import runai.reporter
 ```
 
-If you are using Keras, you may also want to import the following command for auto-logging:
+If you are using Keras, use the following command instead:
 
 ```
 import runai.reporter.keras
@@ -38,44 +46,116 @@ import runai.reporter.keras
 
 > INFO: Keras related methods are in a sub-package to support non-Keras environments as well
 
-### Termination
+### Scoped and Non-Scoped APIs
 
-The communication with the Pushgateway is done in another process, to reduce the performance impact of this library on the main process.
+There are two ways to use the Run:AI reporting library.
+The first approach is to use a reporter object as a Python context manager (i.e. using `with`).
+The second approach is to call non-scoped methods.
 
-Therefore, at the end of your script, it is highly recommended to call `runai.reporter.finish()`.
-This method makes sure all reports were successfully sent and gracefully terminates the worker process.
+The communication with the Pushgateway is done in another process, to reduce the performance impact of this library on the main process, making the reporting itself is done asynchronously.
+Proper termination is required to ensure everything was successfully reported before the Python process terminates.
 
-### Concepts
+Therefore, it is **highly recommended to use the scoped API** as it shuts down the reporting process properly.
 
-*Parameters:*
-Key-value input parameters of your choice. Key and value are strings.
+If using the non-scoped API, reports are not guaranteed to be successfully reported without explicit termination (using the `finish` method) or upon failures.
 
-*Metrics:*
-Key-value input parameters of your choice. Key is a string, value is numeric.
+#### Scoped API - *Recommended*
 
-### API
+First, you'll need to create a reporter object `runai.reporter.Reporter`.
+You should create the object using a `with` statement. For example:
+
+```
+with runai.reporter.Reporter() as reporter:
+    pass
+```
+
+Then, use `reporter` to report metrics and parameters using the methods `reportMetric` and `reportParameter`.
+
+When using Keras, it is preferable to use `runai.reporter.keras.Reporter` instead.
+The Keras reporter lets you to add automatic logging to Keras models.
+
+This could be done by passing `autolog=True` when creating the Keras reporter, or by calling its `autolog()` method. For example:
+
+```
+with runai.reporter.keras.Reporter(autolog=True) as reporter:
+    pass
+```
+
+or
+
+```
+with runai.reporter.keras.Reporter() as reporter:
+    reporter.autolog()
+```
+
+#### Non-Scoped API
+
+*It is less recommended to use this API (use the scoped API instead)*
+
+Use the methods `reportMetric` and `reportParameter` from `runai.reporter` directly without creating any reporter objects.
+
+> INFO: This actually creates a global `Reporter` object in the background
+
+At the end of your script, you should explicitly call `runai.reporter.finish()`.
+This is to properly terminate the reporter process and ensure everything was successfully reported before the Python script ends.
+
+### API Reference
 
 ---
 
-`runai.reporter.reportMetric`
+`runai.reporter.Reporter.reportMetric` and `runai.reporter.reportMetric`
 
 Sends a metric with the following name "reporter_push_gateway_metric_[reporter_metric_name]".
 
-Example:
+Scoped API:
+```
+with runai.reporter.Reporter() as reporter:
+    reporter.reportMetric('batch_size', 100)
+```
+
+Non-scoped API:
 ```
 runai.reporter.reportMetric('batch_size', 100)
 ```
 
 ---
 
-`runai.reporter.reportParameter`
+`runai.reporter.Reporter.reportParameter` and `runai.reporter.reportParameter`
 
 Sends a parameter with the following name "reporter_push_gateway_metric_[reporter_parameter_name]".
 
-Example:
+Scoped API:
+```
+with runai.reporter.Reporter() as reporter:
+    reporter.reportParameter('loss_method', 'categorical_crossentropy')
+```
+
+Non-scoped API:
 ```
 runai.reporter.reportParameter('loss_method', 'categorical_crossentropy')
 ```
+
+### Scoped API
+
+---
+
+`runai.reporter.keras.Reporter.autolog`
+
+Enables Keras automatic logging. This could be done by passing `autolog=True` when creating the Keras reporter, or by calling its `autolog()` method. For example:
+
+```
+with runai.reporter.keras.Reporter(autolog=True) as reporter:
+    pass
+```
+
+or
+
+```
+with runai.reporter.keras.Reporter() as reporter:
+    reporter.autolog()
+```
+
+### Non-Scoped API
 
 ---
 
