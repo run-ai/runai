@@ -4,9 +4,13 @@ import random as r
 import string as s
 
 number = lambda a=10, b=100: r.randint(a, b)
+choice = r.choice
 
-def string(length=5):
-    return ''.join(r.choice(s.ascii_letters + s.digits + s.punctuation) for _ in range(length))
+def string(length=5, chars=None):
+    if not chars:
+        chars = s.ascii_letters + s.digits + s.punctuation
+
+    return ''.join(choice(chars) for _ in range(length))
 
 def strings(count=number(2, 10)):
     return [string() for _ in range(count)]

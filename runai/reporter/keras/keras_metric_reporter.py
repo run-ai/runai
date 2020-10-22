@@ -2,21 +2,44 @@ import time
 
 import keras
 
-from runai.reporter import reportMetric, reportParameter
+import runai.reporter
+import runai.utils
 
 __original_fit__ = keras.Model.fit
 __original_compile__ = keras.Model.compile
 __original_fit_generator__ = keras.Model.fit_generator
 
+def autologged():
+    return \
+        keras.Model.fit != __original_fit__                      or \
+        keras.Model.compile != __original_compile__              or \
+        keras.Model.fit_generator != __original_fit_generator__
+
 def disableAutoLog():
+    runai.utils.log.info('Disabling Keras automatic logging')
+
     keras.Model.fit = __original_fit__
     keras.Model.fit_generator = __original_fit_generator__
     keras.Model.compile = __original_compile__
 
 def autolog(accuracy=True, loss=True, learning_rate=True, epoch=True, step=True, batch_size=True, overall_epochs=True,
-            optimizer_name=True, number_of_layers=True, loss_method=False, epsilon=False):
+            optimizer_name=True, number_of_layers=True, loss_method=False, epsilon=False, reporter=None):
     # The following line must be at top of the method
     autolog_inputs = locals()
+
+    runai.utils.log.info('Enabling Keras automatic logging')
+
+    def _reportMetric(*args, **kwargs):
+        if reporter is not None:
+            reporter.reportMetric(*args, **kwargs)
+        else :
+            runai.reporter.reportMetric(*args, **kwargs)
+
+    def _reportParameter(*args, **kwargs):
+        if reporter is not None:
+            reporter.reportParameter(*args, **kwargs)
+        else :
+            runai.reporter.reportParameter(*args, **kwargs)
 
     def fit(self, *args, **kwargs):
         _append_autolog_metrics_to_callbacks(args, kwargs, index_in_args=5)
@@ -49,13 +72,13 @@ def autolog(accuracy=True, loss=True, learning_rate=True, epoch=True, step=True,
 
         if _should_report_metric_or_parameter(autolog_inputs, 'overall_epochs'):
             overall_epochs_val = _get_value_of_method_parameter(original_args, original_kwargs, index_in_args, key_in_kwargs='epochs', default_value=1)  # Keras' default value
-            reportMetric('overall_epochs', overall_epochs_val)
+            _reportMetric('overall_epochs', overall_epochs_val)
 
     def _report_batch_size(original_args, original_kwargs):
         if _should_report_metric_or_parameter(autolog_inputs, 'batch_size'):
             batch_size_val = _get_value_of_method_parameter(original_args, original_kwargs, index_in_args=2, key_in_kwargs='batch_size')
             if batch_size_val:
-                reportMetric('batch_size', batch_size_val)
+                _reportMetric('batch_size', batch_size_val)
 
     def _report_loss_method(original_args, original_kwargs):
         loss_method_val = _get_value_of_method_parameter(original_args, original_kwargs, index_in_args=1, key_in_kwargs='loss')
@@ -103,11 +126,11 @@ def autolog(accuracy=True, loss=True, learning_rate=True, epoch=True, step=True,
 
     def _report_metric_if_needed(autolog_inputs, key, value):
         if _should_report_metric_or_parameter(autolog_inputs, key):
-            reportMetric(key, value)
+            _reportMetric(key, value)
 
     def _report_parameter_if_needed(autolog_inputs, key, value):
         if _should_report_metric_or_parameter(autolog_inputs, key):
-            reportParameter(key, value)
+            _reportParameter(key, value)
 
     def _should_report_metric_or_parameter(autolog_inputs, key):
         return key in autolog_inputs and autolog_inputs[key]
@@ -141,7 +164,7 @@ def autolog(accuracy=True, loss=True, learning_rate=True, epoch=True, step=True,
 
             parameter_from_model = getattr(self.model.optimizer, name_of_optimizer_attr)
             value = parameter_from_model if type(parameter_from_model) is float else keras.backend.eval(parameter_from_model)
-            reportParameter(metric_name, value)
+            _reportParameter(metric_name, value)
 
         def _report_metric_from_logs_if_needed(self, autolog_inputs, key_in_logs, logs, metric_name=None):
             if key_in_logs not in logs:
@@ -151,3 +174,28 @@ def autolog(accuracy=True, loss=True, learning_rate=True, epoch=True, step=True,
                 metric_name = key_in_logs
 
             _report_metric_if_needed(autolog_inputs, metric_name, logs[key_in_logs])
+
+class Reporter(runai.reporter.Reporter):
+    def __init__(self, *args, **kwargs):
+        # pop 'autolog' out of kwargs if it exists
+        autolog = kwargs.pop('autolog', False)
+
+        # initialize the base reporter class
+        super(Reporter, self).__init__(*args, **kwargs)
+
+        # autolog if needed
+
+        self.autologged = False
+
+        if autolog:
+            self.autolog()
+
+    def autolog(self, *args, **kwargs):
+        autolog(*args, **kwargs, reporter=self)
+        self.autologged = True
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        if self.autologged:
+            disableAutoLog()
+
+        super(Reporter, self).__exit__(exc_type, exc_val, exc_tb)

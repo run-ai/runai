@@ -1,5 +1,5 @@
+import os
 import unittest
-from os import environ
 
 import keras
 from keras.utils.np_utils import to_categorical
@@ -19,7 +19,7 @@ STEPS_PER_EPOCH = 1
 
 class MockReporter(runai.utils.Hook):
     def __init__(self, methodName):
-        super(MockReporter, self).__init__(runai.reporter.keras.keras_metric_reporter, methodName)
+        super(MockReporter, self).__init__(runai.reporter, methodName)
         self.reported = []
 
     def __hook__(self, *args, **kwargs):
@@ -46,8 +46,8 @@ class KerasAutologTest(unittest.TestCase):
             self.assertEqual(reportParameterMock.reported, expected_parameters, 'Reported Paramters unmatched')
 
     def _mock_env_variables(self):
-        environ["podUUID"] = "podUUId"
-        environ["reporterGatewayURL"] = "reporterGatewayURL"
+        os.environ["podUUID"] = "podUUId"
+        os.environ["reporterGatewayURL"] = "reporterGatewayURL"
 
     def _run_model_with_fit(self):
         x_train, y_train = self._get_x_train_y_train()
@@ -117,6 +117,57 @@ class KerasAutologTest(unittest.TestCase):
         runai.reporter.keras.disableAutoLog()
 
     #TODO: Add tests that will add new metrics to the compile method and verify they were added.
+
+def pid_exists(pid):
+    try:
+        os.kill(pid, 0)
+    except OSError:
+        return False
+    else:
+        return True
+
+class KerasReporterTest(KerasAutologTest):
+    def testCreationScope(self):
+        with runai.reporter.keras.Reporter() as reporter:
+            self.assertTrue(pid_exists(reporter.pid))
+
+        self.assertFalse(pid_exists(reporter.pid))
+
+    def testAutologCreation(self):
+        for autolog in [True, False]:
+            with runai.reporter.keras.Reporter(autolog=autolog) as reporter:
+                self.assertEquals(runai.reporter.keras.autologged(), autolog)
+
+            self.assertFalse(runai.reporter.keras.autologged())
+
+    def testAutologManual(self):
+        with runai.reporter.keras.Reporter() as reporter:
+            self.assertFalse(runai.reporter.keras.autologged())
+            reporter.autolog()
+            self.assertTrue(runai.reporter.keras.autologged())
+
+        self.assertFalse(runai.reporter.keras.autologged())
+
+    def testAutologSanity(self):
+        class Reporter(runai.reporter.keras.Reporter):
+            def __init__(self, *args, **kwargs):
+                super(Reporter, self).__init__(*args, **kwargs)
+                self.metrics = set()
+                self.parameters = set()
+
+            def reportMetric(self, name, value):
+                self.metrics.add(name)
+
+            def reportParameter(self, name, value):
+                self.parameters.add(name)
+
+        with Reporter() as reporter:
+            reporter.autolog()
+
+            self._run_model_with_fit()
+
+            self.assertEqual(reporter.metrics, { 'overall_epochs', 'batch_size', 'number_of_layers', 'epoch', 'step', 'accuracy', 'loss' })
+            self.assertEqual(reporter.parameters, { 'optimizer_name', 'learning_rate' })
 
 if __name__ == '__main__':
     unittest.main()
