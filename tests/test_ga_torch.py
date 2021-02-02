@@ -1,6 +1,7 @@
 import unittest
 
 import numpy
+import pickle
 import torch
 
 import runai.ga.torch
@@ -35,6 +36,19 @@ class Dry(unittest.TestCase):
 
         self.assertEqual(wrapped.runai.steps, steps)
         self.assertEqual(wrapped.runai.step, 0)
+
+    def testPickle(self):
+        optimizer = Dry.Optimizer()
+        steps = runai.utils.random.number()
+        wrapped = runai.ga.torch.optim.Optimizer(optimizer, steps)
+
+        wrapped.runai.step = runai.utils.random.number()
+        state = wrapped.state_dict()
+        self.assertEqual(wrapped.runai, state['state']['runai'])
+        dumped = pickle.dumps(state)
+        loaded = pickle.loads(dumped)
+        self.assertEqual(state['state']['runai'].steps, loaded['state']['runai'].steps)
+        self.assertEqual(state['state']['runai'].step, loaded['state']['runai'].step)
 
     def testStep(self):
         optimizer = Dry.Optimizer()
