@@ -4,20 +4,20 @@ import torch.optim
 
 import runai.utils
 
+class State:
+    def __init__(self, steps):
+        self.steps = steps
+        self.step = 0
+
 # this design is inspired by Horovod's `DistributedOptimizer`
 def Optimizer(optimizer, steps):
     """
     Wraps any valid PyTorch optimizer with gradient accumulation
     """
     class _GradientAccumulationOptimizer(torch.optim.Optimizer):
-        class State:
-            def __init__(self, steps):
-                self.steps = steps
-                self.step = 0
-
         def __init__(self, steps, params):
             self.__class__.__optimizer__.__init__(self, params) # TODO(levosos): what about `defaults`?
-            self.state['runai'] = _GradientAccumulationOptimizer.State(steps)
+            self.state['runai'] = State(steps)
 
             runai.utils.log.debug('Wrapping \'%s\' PyTorch optimizer with GA of %d steps', optimizer.__class__.__name__, steps)
 
