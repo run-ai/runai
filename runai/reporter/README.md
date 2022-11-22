@@ -18,8 +18,6 @@ It is required to have the following environment variables:
 1. `podUUID`
 2. `reporterGatewayURL`
 
-These environment variables will be added to each pod when a job was created using the Run:AI CLI.
-
 ### Reporting Options
 
 *Parameters:*
